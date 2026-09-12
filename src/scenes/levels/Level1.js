@@ -34,91 +34,170 @@ export default class Level1 extends LevelScene {
   }
 
   showIntro() {
+    // Pause player controls during intro
+    this.introActive = true;
+
+    // Hide touch controls during intro
+    if (this.touchControls) {
+      this.touchControls.container.visible = false;
+    }
+
     const introContainer = new Container();
 
-    // Dark overlay
+    // Full black overlay (starts opaque, will fade)
     const overlay = new Graphics();
     overlay.rect(0, 0, this.width, this.height);
-    overlay.fill({ color: 0x000000, alpha: 0.7 });
+    overlay.fill({ color: 0x000000 });
     introContainer.addChild(overlay);
 
-    // Message box
-    const box = new Graphics();
-    box.roundRect(this.width / 2 - 300, this.height / 2 - 120, 600, 240, 20);
-    box.fill({ color: 0x1a1a2e, alpha: 0.95 });
-    box.stroke({ color: 0xffaa00, width: 3 });
-    introContainer.addChild(box);
+    // Story lines that will fade in one by one
+    const lines = [
+      { text: "The world has gone cold.", delay: 500, y: -60 },
+      { text: "Not from ice...", delay: 2000, y: -20 },
+      { text: "...from loneliness.", delay: 3500, y: 20 },
+      { text: "But somewhere in these woods,\nthere's a fox who forgot how to shine.", delay: 5500, y: 80 },
+    ];
 
-    // Title
-    const title = new Text({
-      text: "🦊 Ember's Woods",
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 32,
-        fill: 0xffd93d,
-        align: 'center',
-      },
+    const textContainer = new Container();
+    textContainer.x = this.width / 2;
+    textContainer.y = this.height / 2;
+    introContainer.addChild(textContainer);
+
+    // Create all text elements (hidden initially)
+    const textElements = lines.map(line => {
+      const text = new Text({
+        text: line.text,
+        style: {
+          fontFamily: 'Georgia, serif',
+          fontSize: 28,
+          fill: 0xf1faee,
+          align: 'center',
+        },
+      });
+      text.anchor.set(0.5);
+      text.y = line.y;
+      text.alpha = 0;
+      textContainer.addChild(text);
+      return { text, delay: line.delay };
     });
-    title.anchor.set(0.5);
-    title.x = this.width / 2;
-    title.y = this.height / 2 - 70;
-    introContainer.addChild(title);
 
-    // Story text
-    const story = new Text({
-      text: "A fox who helped everyone until she forgot herself.\nFind her 3 lost memories to remind her who she was.",
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 20,
-        fill: 0xf1faee,
-        align: 'center',
-        wordWrap: true,
-        wordWrapWidth: 500,
-      },
-    });
-    story.anchor.set(0.5);
-    story.x = this.width / 2;
-    story.y = this.height / 2;
-    introContainer.addChild(story);
-
-    // Controls hint
+    // Controls hint (shows later)
     const controls = new Text({
-      text: "← → to move  |  ↑ to jump  |  Collect the glowing orbs!",
+      text: "← → to move  |  SPACE to jump",
       style: {
         fontFamily: 'Arial, sans-serif',
-        fontSize: 16,
+        fontSize: 18,
         fill: 0x888888,
         align: 'center',
       },
     });
     controls.anchor.set(0.5);
     controls.x = this.width / 2;
-    controls.y = this.height / 2 + 50;
+    controls.y = this.height - 120;
+    controls.alpha = 0;
     introContainer.addChild(controls);
 
-    // Tap to start
+    // Tap to begin (shows last)
     const tapText = new Text({
-      text: "[ Tap anywhere to start ]",
+      text: "[ Tap anywhere to begin ]",
       style: {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: 18,
+        fontFamily: 'Georgia, serif',
+        fontSize: 22,
         fill: 0xffaa00,
         align: 'center',
       },
     });
     tapText.anchor.set(0.5);
     tapText.x = this.width / 2;
-    tapText.y = this.height / 2 + 90;
+    tapText.y = this.height - 70;
+    tapText.alpha = 0;
     introContainer.addChild(tapText);
 
     this.uiLayer.addChild(introContainer);
 
-    // Tap to dismiss
-    overlay.eventMode = 'static';
-    overlay.cursor = 'pointer';
-    overlay.on('pointerdown', () => {
-      introContainer.destroy();
+    // Fade in each line with delays
+    textElements.forEach(({ text, delay }) => {
+      setTimeout(() => {
+        this.fadeIn(text, 1000);
+      }, delay);
     });
+
+    // Show controls after story
+    setTimeout(() => {
+      this.fadeIn(controls, 800);
+    }, 8000);
+
+    // Show tap prompt and enable interaction
+    setTimeout(() => {
+      this.fadeIn(tapText, 800);
+
+      // Pulse animation for tap text
+      const pulseInterval = setInterval(() => {
+        if (tapText.destroyed) {
+          clearInterval(pulseInterval);
+          return;
+        }
+        tapText.alpha = 0.6 + Math.sin(Date.now() * 0.003) * 0.4;
+      }, 50);
+
+      // Enable tap to start
+      overlay.eventMode = 'static';
+      overlay.cursor = 'pointer';
+      overlay.on('pointerdown', () => {
+        clearInterval(pulseInterval);
+        this.fadeOutIntro(introContainer, overlay);
+      });
+    }, 9000);
+  }
+
+  fadeIn(element, duration) {
+    const startTime = Date.now();
+    const tick = () => {
+      if (element.destroyed) return;
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      element.alpha = progress;
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+    tick();
+  }
+
+  fadeOutIntro(introContainer, overlay) {
+    // Fade overlay to semi-transparent (reveal the world underneath)
+    const startTime = Date.now();
+    const duration = 1500;
+
+    const tick = () => {
+      if (introContainer.destroyed) return;
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Fade everything out
+      introContainer.children.forEach(child => {
+        if (child !== overlay) {
+          child.alpha = 1 - progress;
+        }
+      });
+
+      // Fade overlay from black to transparent
+      overlay.clear();
+      overlay.rect(0, 0, this.width, this.height);
+      overlay.fill({ color: 0x000000, alpha: 1 - progress });
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        introContainer.destroy();
+        this.introActive = false;
+        // Show touch controls now that intro is done
+        if (this.touchControls) {
+          this.touchControls.container.visible = true;
+        }
+      }
+    };
+    tick();
   }
 
   createBackground() {

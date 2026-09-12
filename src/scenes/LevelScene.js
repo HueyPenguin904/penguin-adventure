@@ -84,7 +84,7 @@ export class LevelScene extends BaseScene {
   }
 
   update(delta) {
-    if (this.isPaused) return;
+    if (this.isPaused || this.introActive) return;
 
     this.player.update(delta, this.keys);
 
