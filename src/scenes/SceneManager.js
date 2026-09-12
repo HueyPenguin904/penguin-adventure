@@ -12,16 +12,26 @@ export class SceneManager {
   }
 
   async switchTo(newScene) {
-    if (this.currentScene) {
-      this.currentScene.destroy();
-      this.app.stage.removeChildren();
+    try {
+      console.log(`SceneManager: switching to ${newScene.constructor.name}`);
+
+      if (this.currentScene) {
+        this.currentScene.destroy();
+        this.app.stage.removeChildren();
+      }
+
+      this.currentScene = newScene;
+
+      console.log(`SceneManager: initializing ${newScene.constructor.name}...`);
+      await this.currentScene.init();
+      console.log(`SceneManager: ${newScene.constructor.name} initialized`);
+
+      this.app.stage.addChild(this.currentScene.container);
+      console.log(`SceneManager: ${newScene.constructor.name} added to stage`);
+    } catch (err) {
+      console.error('SceneManager error:', err);
+      throw err;
     }
-
-    this.currentScene = newScene;
-
-    await this.currentScene.init();
-
-    this.app.stage.addChild(this.currentScene.container);
   }
 
   update(ticker) {

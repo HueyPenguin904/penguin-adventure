@@ -4,12 +4,29 @@ import { LEVELS } from '../config/levels.js';
 
 export class MenuScene extends BaseScene {
   async init() {
-    this.createBackground();
-    this.createTitle();
-    this.createPlayButton();
-    this.setupInput();
+    try {
+      console.log('MenuScene: creating background...');
+      this.createBackground();
+      console.log('MenuScene: background done');
 
-    this.time = 0;
+      console.log('MenuScene: creating title...');
+      this.createTitle();
+      console.log('MenuScene: title done');
+
+      console.log('MenuScene: creating play button...');
+      this.createPlayButton();
+      console.log('MenuScene: play button done');
+
+      console.log('MenuScene: setting up input...');
+      this.setupInput();
+      console.log('MenuScene: input done');
+
+      this.time = 0;
+      console.log('MenuScene: fully initialized!');
+    } catch (err) {
+      console.error('MenuScene init error:', err);
+      throw err;
+    }
   }
 
   createBackground() {
