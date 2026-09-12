@@ -23,8 +23,8 @@ export class TouchControls {
   }
 
   createControls() {
-    const buttonSize = 90; // Bigger buttons = easier to hit
-    const padding = 25;
+    const buttonSize = 100; // Even bigger buttons!
+    const padding = 20;
     const bottomY = GAME.HEIGHT - buttonSize - padding;
 
     // Left button (bottom left)
@@ -32,17 +32,17 @@ export class TouchControls {
       padding,
       bottomY,
       buttonSize,
-      '←',
+      '◀',
       () => { this.keys.left = true; },
       () => { this.keys.left = false; }
     );
 
     // Right button (next to left)
     this.rightBtn = this.createButton(
-      padding + buttonSize + 15,
+      padding + buttonSize + 20,
       bottomY,
       buttonSize,
-      '→',
+      '▶',
       () => { this.keys.right = true; },
       () => { this.keys.right = false; }
     );
@@ -52,7 +52,7 @@ export class TouchControls {
       GAME.WIDTH - buttonSize - padding,
       bottomY,
       buttonSize,
-      '↑',
+      '▲',
       () => { this.keys.jump = true; },
       () => { this.keys.jump = false; }
     );
@@ -93,25 +93,23 @@ export class TouchControls {
     button.eventMode = 'static';
     button.cursor = 'pointer';
 
-    // Touch/mouse events - with scale feedback
-    const pressButton = (e) => {
-      if (e) e.stopPropagation();
-      button.scale.set(0.9); // Shrink slightly when pressed
-      bg.alpha = 0.7;
+    // Direct touch handling - no delays!
+    const pressButton = () => {
+      button.scale.set(0.85);
+      bg.alpha = 0.8;
       onDown();
     };
 
     const releaseButton = () => {
-      button.scale.set(1.0); // Back to normal
+      button.scale.set(1.0);
       bg.alpha = 0.4;
       onUp();
     };
 
+    // Use pointer events for fastest response
     button.on('pointerdown', pressButton);
     button.on('pointerup', releaseButton);
     button.on('pointerupoutside', releaseButton);
-    button.on('touchend', releaseButton);
-    button.on('touchendoutside', releaseButton);
     button.on('pointercancel', releaseButton);
 
     this.buttons.push({ button, bg, onUp });

@@ -143,6 +143,19 @@ export class Player {
       }
     }
 
+    // Left boundary
     if (this.x < this.width / 2) this.x = this.width / 2;
+
+    // Right boundary (world is 2500 wide)
+    const worldWidth = 2500;
+    if (this.x > worldWidth - this.width / 2) this.x = worldWidth - this.width / 2;
+
+    // If you fall off bottom, reset to start
+    if (this.y > 800) {
+      this.x = 100;
+      this.y = 500;
+      this.vx = 0;
+      this.vy = 0;
+    }
   }
 }

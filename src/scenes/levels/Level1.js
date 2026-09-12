@@ -24,12 +24,101 @@ export default class Level1 extends LevelScene {
     this.createTrees();
     this.createMemorySparks();
     this.createUI();
+    this.showIntro();
 
     this.particles.createDust(50);
     this.particles.createFireflies(25);
 
     this.lighting.setAmbient(0x1a1a2e, 0.25);
     this.lighting.addPlayerLight(this.player);
+  }
+
+  showIntro() {
+    const introContainer = new Container();
+
+    // Dark overlay
+    const overlay = new Graphics();
+    overlay.rect(0, 0, this.width, this.height);
+    overlay.fill({ color: 0x000000, alpha: 0.7 });
+    introContainer.addChild(overlay);
+
+    // Message box
+    const box = new Graphics();
+    box.roundRect(this.width / 2 - 300, this.height / 2 - 120, 600, 240, 20);
+    box.fill({ color: 0x1a1a2e, alpha: 0.95 });
+    box.stroke({ color: 0xffaa00, width: 3 });
+    introContainer.addChild(box);
+
+    // Title
+    const title = new Text({
+      text: "🦊 Ember's Woods",
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 32,
+        fill: 0xffd93d,
+        align: 'center',
+      },
+    });
+    title.anchor.set(0.5);
+    title.x = this.width / 2;
+    title.y = this.height / 2 - 70;
+    introContainer.addChild(title);
+
+    // Story text
+    const story = new Text({
+      text: "A fox who helped everyone until she forgot herself.\nFind her 3 lost memories to remind her who she was.",
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 20,
+        fill: 0xf1faee,
+        align: 'center',
+        wordWrap: true,
+        wordWrapWidth: 500,
+      },
+    });
+    story.anchor.set(0.5);
+    story.x = this.width / 2;
+    story.y = this.height / 2;
+    introContainer.addChild(story);
+
+    // Controls hint
+    const controls = new Text({
+      text: "← → to move  |  ↑ to jump  |  Collect the glowing orbs!",
+      style: {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 16,
+        fill: 0x888888,
+        align: 'center',
+      },
+    });
+    controls.anchor.set(0.5);
+    controls.x = this.width / 2;
+    controls.y = this.height / 2 + 50;
+    introContainer.addChild(controls);
+
+    // Tap to start
+    const tapText = new Text({
+      text: "[ Tap anywhere to start ]",
+      style: {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 18,
+        fill: 0xffaa00,
+        align: 'center',
+      },
+    });
+    tapText.anchor.set(0.5);
+    tapText.x = this.width / 2;
+    tapText.y = this.height / 2 + 90;
+    introContainer.addChild(tapText);
+
+    this.uiLayer.addChild(introContainer);
+
+    // Tap to dismiss
+    overlay.eventMode = 'static';
+    overlay.cursor = 'pointer';
+    overlay.on('pointerdown', () => {
+      introContainer.destroy();
+    });
   }
 
   createBackground() {
@@ -119,18 +208,19 @@ export default class Level1 extends LevelScene {
 
   createGround() {
     const groundContainer = new Container();
+    const worldWidth = 2500;
 
     const groundBase = new Graphics();
-    groundBase.rect(0, 620, 3000, 100);
+    groundBase.rect(0, 620, worldWidth, 100);
     groundBase.fill({ color: 0x1a1a2e });
     groundContainer.addChild(groundBase);
 
     const grassLayer = new Graphics();
-    grassLayer.rect(0, 615, 3000, 10);
+    grassLayer.rect(0, 615, worldWidth, 10);
     grassLayer.fill({ color: 0x2d5016 });
     groundContainer.addChild(grassLayer);
 
-    for (let x = 0; x < 3000; x += 3 + Math.random() * 5) {
+    for (let x = 0; x < worldWidth; x += 3 + Math.random() * 5) {
       const blade = new Graphics();
       const height = 5 + Math.random() * 12;
       blade.moveTo(x, 618);
@@ -141,17 +231,23 @@ export default class Level1 extends LevelScene {
     }
 
     this.worldLayer.addChild(groundContainer);
-    this.player.addCollider({ x: 0, y: 620, width: 3000, height: 100 });
+    this.player.addCollider({ x: 0, y: 620, width: worldWidth, height: 100 });
   }
 
   createPlatforms() {
+    // Redesigned so ALL platforms are reachable in order!
+    // Max jump is ~130 pixels with new physics
     const platforms = [
-      { x: 300, y: 520, width: 200, height: 25 },
-      { x: 600, y: 450, width: 150, height: 25 },
-      { x: 900, y: 380, width: 180, height: 25 },
-      { x: 500, y: 300, width: 120, height: 25 },
-      { x: 1200, y: 500, width: 200, height: 25 },
-      { x: 1500, y: 420, width: 150, height: 25 },
+      // Path to spark 1 (easy, just up from ground)
+      { x: 200, y: 520, width: 180, height: 25 },
+
+      // Path to spark 2 (staircase going right and up)
+      { x: 450, y: 460, width: 150, height: 25 },
+      { x: 650, y: 400, width: 150, height: 25 },
+
+      // Path to spark 3 (continue staircase)
+      { x: 850, y: 340, width: 150, height: 25 },
+      { x: 1050, y: 280, width: 180, height: 25 },
     ];
 
     platforms.forEach(p => {
@@ -251,10 +347,14 @@ export default class Level1 extends LevelScene {
   createMemorySparks() {
     this.memorySparks = [];
 
+    // Sparks positioned to be reachable from the platforms!
     const sparkPositions = [
-      { x: 400, y: 480, memory: 'Ember teaching baby birds to fly' },
-      { x: 700, y: 400, memory: 'Ember making a lonely rabbit laugh' },
-      { x: 550, y: 250, memory: 'Ember dancing alone in the moonlight' },
+      // Spark 1: Above first platform (easy jump from platform)
+      { x: 290, y: 470, memory: 'Ember teaching baby birds to fly' },
+      // Spark 2: Above middle platform (reachable with jump)
+      { x: 725, y: 350, memory: 'Ember making a lonely rabbit laugh' },
+      // Spark 3: Above highest platform
+      { x: 1130, y: 230, memory: 'Ember dancing alone in the moonlight' },
     ];
 
     sparkPositions.forEach(pos => {
