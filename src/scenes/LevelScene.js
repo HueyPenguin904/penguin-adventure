@@ -5,6 +5,7 @@ import { LightingSystem } from '../systems/LightingSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { DialogSystem } from '../systems/DialogSystem.js';
 import { ParticleSystem } from '../systems/ParticleSystem.js';
+import { TouchControls } from '../systems/TouchControls.js';
 
 /**
  * LevelScene - base class for all playable levels.
@@ -44,6 +45,10 @@ export class LevelScene extends BaseScene {
     await this.setup();
 
     this.setupInput();
+
+    // Add touch controls for mobile (must be after setupInput so this.keys exists)
+    this.touchControls = new TouchControls(this, this.keys);
+    this.uiLayer.addChild(this.touchControls.container);
   }
 
   async setup() {
@@ -96,6 +101,9 @@ export class LevelScene extends BaseScene {
   destroy() {
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    if (this.touchControls) {
+      this.touchControls.destroy();
+    }
     super.destroy();
   }
 }
