@@ -1,6 +1,5 @@
-import { Application, Assets } from 'pixi.js';
+import { Application } from 'pixi.js';
 import { GAME } from './config/constants.js';
-import { SPRITES, BACKGROUNDS } from './config/assets.js';
 import { SceneManager } from './scenes/SceneManager.js';
 import { MenuScene } from './scenes/MenuScene.js';
 
@@ -17,25 +16,18 @@ async function init() {
 
   document.getElementById('game-container').appendChild(app.canvas);
 
-  // Load all game assets
-  console.log('Loading assets...');
-
-  const assetsToLoad = {
-    penguin: SPRITES.penguin,
-    ember: SPRITES.ember,
-    memory_spark: SPRITES.memory_spark,
-    level1_far: BACKGROUNDS.level1_far,
-    level1_mid: BACKGROUNDS.level1_mid,
-  };
-
-  await Assets.load(Object.values(assetsToLoad));
-  console.log('Assets loaded!');
+  console.log('Penguin Adventure starting...');
 
   const sceneManager = new SceneManager(app);
 
   window.game = { app, sceneManager };
 
   sceneManager.switchTo(new MenuScene(sceneManager));
+
+  console.log('Game started!');
 }
 
-init().catch(console.error);
+init().catch(err => {
+  console.error('Game failed to start:', err);
+  document.body.innerHTML = `<div style="color:white;padding:20px;">Error: ${err.message}</div>`;
+});
