@@ -89,14 +89,19 @@ export class Player {
   }
 
   update(delta, keys) {
+    // Smooth acceleration instead of instant full speed
     if (keys.left) {
-      this.vx = -PHYSICS.PLAYER_SPEED;
+      this.vx -= PHYSICS.PLAYER_ACCEL;
+      if (this.vx < -PHYSICS.PLAYER_SPEED) this.vx = -PHYSICS.PLAYER_SPEED;
       this.sprite.scale.x = -1;
     } else if (keys.right) {
-      this.vx = PHYSICS.PLAYER_SPEED;
+      this.vx += PHYSICS.PLAYER_ACCEL;
+      if (this.vx > PHYSICS.PLAYER_SPEED) this.vx = PHYSICS.PLAYER_SPEED;
       this.sprite.scale.x = 1;
     } else {
+      // Smooth deceleration
       this.vx *= PHYSICS.FRICTION;
+      if (Math.abs(this.vx) < 1) this.vx = 0;
     }
 
     if (keys.jump && this.grounded) {

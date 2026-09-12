@@ -6,9 +6,10 @@ export const GAME = {
 
 export const PHYSICS = {
   GRAVITY: 980,
-  PLAYER_SPEED: 200,
-  PLAYER_JUMP: 400,
-  FRICTION: 0.85,
+  PLAYER_SPEED: 220,
+  PLAYER_ACCEL: 15, // Acceleration - how fast we reach max speed
+  PLAYER_JUMP: 420,
+  FRICTION: 0.88, // How quickly we slow down (higher = slower stop)
 };
 
 export const LIGHTING = {

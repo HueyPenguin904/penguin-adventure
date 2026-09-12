@@ -23,8 +23,8 @@ export class TouchControls {
   }
 
   createControls() {
-    const buttonSize = 70;
-    const padding = 20;
+    const buttonSize = 90; // Bigger buttons = easier to hit
+    const padding = 25;
     const bottomY = GAME.HEIGHT - buttonSize - padding;
 
     // Left button (bottom left)
@@ -93,33 +93,26 @@ export class TouchControls {
     button.eventMode = 'static';
     button.cursor = 'pointer';
 
-    // Touch/mouse events
-    button.on('pointerdown', (e) => {
-      e.stopPropagation();
-      bg.tint = 0xaaaaaa;
+    // Touch/mouse events - with scale feedback
+    const pressButton = (e) => {
+      if (e) e.stopPropagation();
+      button.scale.set(0.9); // Shrink slightly when pressed
+      bg.alpha = 0.7;
       onDown();
-    });
+    };
 
-    button.on('pointerup', () => {
-      bg.tint = 0xffffff;
+    const releaseButton = () => {
+      button.scale.set(1.0); // Back to normal
+      bg.alpha = 0.4;
       onUp();
-    });
+    };
 
-    button.on('pointerupoutside', () => {
-      bg.tint = 0xffffff;
-      onUp();
-    });
-
-    // Also handle touchend in case pointerup doesn't fire
-    button.on('touchend', () => {
-      bg.tint = 0xffffff;
-      onUp();
-    });
-
-    button.on('touchendoutside', () => {
-      bg.tint = 0xffffff;
-      onUp();
-    });
+    button.on('pointerdown', pressButton);
+    button.on('pointerup', releaseButton);
+    button.on('pointerupoutside', releaseButton);
+    button.on('touchend', releaseButton);
+    button.on('touchendoutside', releaseButton);
+    button.on('pointercancel', releaseButton);
 
     this.buttons.push({ button, bg, onUp });
 
@@ -137,8 +130,9 @@ export class TouchControls {
 
   // Reset all buttons (useful when scene changes)
   reset() {
-    for (const { bg, onUp } of this.buttons) {
-      bg.tint = 0xffffff;
+    for (const { button, bg, onUp } of this.buttons) {
+      button.scale.set(1.0);
+      bg.alpha = 0.4;
       onUp();
     }
   }
