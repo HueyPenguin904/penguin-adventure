@@ -1,6 +1,5 @@
-import { Sprite, Assets, Container, Graphics } from 'pixi.js';
+import { Container, Graphics } from 'pixi.js';
 import { PHYSICS } from '../config/constants.js';
-import { SPRITES } from '../config/assets.js';
 
 export class Player {
   constructor(scene) {
@@ -23,22 +22,57 @@ export class Player {
   createSprite() {
     const container = new Container();
 
-    // Try to load actual sprite, fall back to placeholder
-    const texture = Assets.get(SPRITES.penguin);
+    // Draw a cute penguin with graphics (no image needed!)
+    // Body - black oval
+    const body = new Graphics();
+    body.ellipse(0, 0, this.width / 2.2, this.height / 2);
+    body.fill({ color: 0x1a1a2e });
+    container.addChild(body);
 
-    if (texture) {
-      const penguinSprite = new Sprite(texture);
-      penguinSprite.anchor.set(0.5, 0.5);
-      penguinSprite.width = this.width;
-      penguinSprite.height = this.height;
-      container.addChild(penguinSprite);
-    } else {
-      // Fallback to simple shape
-      const body = new Graphics();
-      body.ellipse(0, 0, this.width / 2, this.height / 2);
-      body.fill({ color: 0x2d3436 });
-      container.addChild(body);
-    }
+    // Belly - white oval
+    const belly = new Graphics();
+    belly.ellipse(0, 5, this.width / 3, this.height / 2.5);
+    belly.fill({ color: 0xf1faee });
+    container.addChild(belly);
+
+    // Left eye
+    const leftEye = new Graphics();
+    leftEye.circle(-10, -15, 8);
+    leftEye.fill({ color: 0xffffff });
+    const leftPupil = new Graphics();
+    leftPupil.circle(-10, -15, 4);
+    leftPupil.fill({ color: 0x1a1a2e });
+    container.addChild(leftEye);
+    container.addChild(leftPupil);
+
+    // Right eye
+    const rightEye = new Graphics();
+    rightEye.circle(10, -15, 8);
+    rightEye.fill({ color: 0xffffff });
+    const rightPupil = new Graphics();
+    rightPupil.circle(10, -15, 4);
+    rightPupil.fill({ color: 0x1a1a2e });
+    container.addChild(rightEye);
+    container.addChild(rightPupil);
+
+    // Beak - orange triangle
+    const beak = new Graphics();
+    beak.moveTo(0, -5);
+    beak.lineTo(-8, 5);
+    beak.lineTo(8, 5);
+    beak.closePath();
+    beak.fill({ color: 0xff9500 });
+    container.addChild(beak);
+
+    // Feet - orange
+    const leftFoot = new Graphics();
+    leftFoot.ellipse(-15, this.height / 2 - 5, 12, 6);
+    leftFoot.fill({ color: 0xff9500 });
+    const rightFoot = new Graphics();
+    rightFoot.ellipse(15, this.height / 2 - 5, 12, 6);
+    rightFoot.fill({ color: 0xff9500 });
+    container.addChild(leftFoot);
+    container.addChild(rightFoot);
 
     return container;
   }
