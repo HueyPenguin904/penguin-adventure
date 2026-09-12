@@ -1,0 +1,390 @@
+import { Graphics, Text, Container, BlurFilter } from 'pixi.js';
+import { LevelScene } from '../LevelScene.js';
+import { MemorySpark } from '../../entities/MemorySpark.js';
+
+/**
+ * Level 1: Ember's Woods
+ *
+ * A fox who burned too bright helping others.
+ * Now she sits dim in a hollow tree, forgetting who she was.
+ *
+ * Objective: Find 3 memory sparks that show her past self.
+ */
+export default class Level1 extends LevelScene {
+  async setup() {
+    this.createBackground();
+
+    this.player.setPosition(100, 500);
+
+    this.memoriesCollected = 0;
+    this.totalMemories = 3;
+
+    this.createGround();
+    this.createPlatforms();
+    this.createTrees();
+    this.createMemorySparks();
+    this.createUI();
+
+    this.particles.createDust(50);
+    this.particles.createFireflies(25);
+
+    this.lighting.setAmbient(0x1a1a2e, 0.25);
+    this.lighting.addPlayerLight(this.player);
+  }
+
+  createBackground() {
+    const bgContainer = new Container();
+
+    const sky = new Graphics();
+    const skyGradientTop = 0x0d1b2a;
+    const skyGradientBottom = 0x1b263b;
+    sky.rect(0, 0, 3000, 720);
+    sky.fill({ color: skyGradientTop });
+    bgContainer.addChild(sky);
+
+    const skyOverlay = new Graphics();
+    skyOverlay.rect(0, 300, 3000, 420);
+    skyOverlay.fill({ color: skyGradientBottom, alpha: 0.7 });
+    bgContainer.addChild(skyOverlay);
+
+    this.stars = [];
+    for (let i = 0; i < 80; i++) {
+      const star = new Graphics();
+      const size = 0.5 + Math.random() * 1.5;
+      star.circle(0, 0, size);
+      star.fill({ color: 0xffffff, alpha: 0.3 + Math.random() * 0.5 });
+      star.x = Math.random() * 3000;
+      star.y = Math.random() * 350;
+      this.stars.push({ sprite: star, twinkle: Math.random() * Math.PI * 2 });
+      bgContainer.addChild(star);
+    }
+
+    const moon = new Container();
+    const moonGlow = new Graphics();
+    moonGlow.circle(0, 0, 80);
+    moonGlow.fill({ color: 0x4ecdc4, alpha: 0.15 });
+    moonGlow.filters = [new BlurFilter({ strength: 15 })];
+
+    const moonCore = new Graphics();
+    moonCore.circle(0, 0, 40);
+    moonCore.fill({ color: 0xf1faee, alpha: 0.9 });
+
+    moon.addChild(moonGlow);
+    moon.addChild(moonCore);
+    moon.x = 2400;
+    moon.y = 120;
+    bgContainer.addChild(moon);
+    this.moon = moon;
+
+    const farTrees = this.createTreeSilhouette(0x0a1628, 0.4, 200);
+    farTrees.y = 350;
+    bgContainer.addChild(farTrees);
+    this.farTrees = farTrees;
+
+    const midTrees = this.createTreeSilhouette(0x112240, 0.6, 150);
+    midTrees.y = 400;
+    bgContainer.addChild(midTrees);
+    this.midTrees = midTrees;
+
+    this.bgContainer = bgContainer;
+    this.backgroundLayer.addChild(bgContainer);
+  }
+
+  createTreeSilhouette(color, alpha, baseHeight) {
+    const container = new Container();
+
+    for (let x = -100; x < 3200; x += 60 + Math.random() * 40) {
+      const tree = new Graphics();
+      const height = baseHeight + Math.random() * 80;
+      const width = 30 + Math.random() * 25;
+
+      tree.moveTo(x, 0);
+      tree.lineTo(x + width / 2, -height);
+      tree.lineTo(x + width, 0);
+      tree.closePath();
+      tree.fill({ color, alpha });
+
+      if (Math.random() > 0.6) {
+        const trunk = new Graphics();
+        trunk.rect(x + width * 0.35, 0, width * 0.3, 30);
+        trunk.fill({ color: color, alpha: alpha * 0.8 });
+        container.addChild(trunk);
+      }
+
+      container.addChild(tree);
+    }
+
+    return container;
+  }
+
+  createGround() {
+    const groundContainer = new Container();
+
+    const groundBase = new Graphics();
+    groundBase.rect(0, 620, 3000, 100);
+    groundBase.fill({ color: 0x1a1a2e });
+    groundContainer.addChild(groundBase);
+
+    const grassLayer = new Graphics();
+    grassLayer.rect(0, 615, 3000, 10);
+    grassLayer.fill({ color: 0x2d5016 });
+    groundContainer.addChild(grassLayer);
+
+    for (let x = 0; x < 3000; x += 3 + Math.random() * 5) {
+      const blade = new Graphics();
+      const height = 5 + Math.random() * 12;
+      blade.moveTo(x, 618);
+      blade.lineTo(x + 1, 618 - height);
+      blade.lineTo(x + 2, 618);
+      blade.fill({ color: 0x3d6b1e, alpha: 0.7 + Math.random() * 0.3 });
+      groundContainer.addChild(blade);
+    }
+
+    this.worldLayer.addChild(groundContainer);
+    this.player.addCollider({ x: 0, y: 620, width: 3000, height: 100 });
+  }
+
+  createPlatforms() {
+    const platforms = [
+      { x: 300, y: 520, width: 200, height: 25 },
+      { x: 600, y: 450, width: 150, height: 25 },
+      { x: 900, y: 380, width: 180, height: 25 },
+      { x: 500, y: 300, width: 120, height: 25 },
+      { x: 1200, y: 500, width: 200, height: 25 },
+      { x: 1500, y: 420, width: 150, height: 25 },
+    ];
+
+    platforms.forEach(p => {
+      const platformContainer = new Container();
+
+      const platform = new Graphics();
+      platform.roundRect(0, 0, p.width, p.height, 8);
+      platform.fill({ color: 0x2d3436 });
+      platformContainer.addChild(platform);
+
+      const mossTop = new Graphics();
+      mossTop.roundRect(0, 0, p.width, 8, 4);
+      mossTop.fill({ color: 0x3d6b1e, alpha: 0.8 });
+      platformContainer.addChild(mossTop);
+
+      const highlight = new Graphics();
+      highlight.roundRect(5, 3, p.width - 10, 2, 1);
+      highlight.fill({ color: 0x4d7c2e, alpha: 0.5 });
+      platformContainer.addChild(highlight);
+
+      for (let i = 0; i < 3; i++) {
+        const vine = new Graphics();
+        const vx = 10 + Math.random() * (p.width - 20);
+        const vLength = 15 + Math.random() * 25;
+        vine.moveTo(vx, p.height);
+        vine.lineTo(vx + (Math.random() - 0.5) * 10, p.height + vLength);
+        vine.stroke({ color: 0x2d5016, width: 2, alpha: 0.6 });
+        platformContainer.addChild(vine);
+      }
+
+      platformContainer.x = p.x;
+      platformContainer.y = p.y;
+
+      this.worldLayer.addChild(platformContainer);
+      this.player.addCollider({ x: p.x, y: p.y, width: p.width, height: p.height });
+    });
+  }
+
+  createTrees() {
+    const treePositions = [
+      { x: 150, scale: 1.2 },
+      { x: 450, scale: 0.9 },
+      { x: 800, scale: 1.1 },
+      { x: 1100, scale: 1 },
+      { x: 1400, scale: 1.3 },
+      { x: 1700, scale: 0.85 },
+      { x: 2000, scale: 1.15 },
+    ];
+
+    treePositions.forEach(pos => {
+      const tree = this.createTree(pos.scale);
+      tree.x = pos.x;
+      tree.y = 620;
+      this.worldLayer.addChild(tree);
+    });
+  }
+
+  createTree(scale = 1) {
+    const container = new Container();
+
+    const trunk = new Graphics();
+    const tw = 25 * scale;
+    const th = 120 * scale;
+    trunk.rect(-tw / 2, -th, tw, th);
+    trunk.fill({ color: 0x3d2914 });
+
+    const barkLine1 = new Graphics();
+    barkLine1.moveTo(-tw * 0.3, -th * 0.2);
+    barkLine1.lineTo(-tw * 0.2, -th * 0.8);
+    barkLine1.stroke({ color: 0x2a1d0d, width: 2 });
+
+    const barkLine2 = new Graphics();
+    barkLine2.moveTo(tw * 0.2, -th * 0.3);
+    barkLine2.lineTo(tw * 0.15, -th * 0.9);
+    barkLine2.stroke({ color: 0x2a1d0d, width: 2 });
+
+    container.addChild(trunk);
+    container.addChild(barkLine1);
+    container.addChild(barkLine2);
+
+    const foliageLayers = [
+      { y: -th - 30, r: 70 * scale, color: 0x1a3d00 },
+      { y: -th - 60, r: 55 * scale, color: 0x234d00 },
+      { y: -th - 85, r: 40 * scale, color: 0x2d5d10 },
+    ];
+
+    foliageLayers.forEach(f => {
+      const foliage = new Graphics();
+      foliage.circle(0, f.y, f.r);
+      foliage.fill({ color: f.color, alpha: 0.9 });
+      container.addChild(foliage);
+    });
+
+    return container;
+  }
+
+  createMemorySparks() {
+    this.memorySparks = [];
+
+    const sparkPositions = [
+      { x: 400, y: 480, memory: 'Ember teaching baby birds to fly' },
+      { x: 700, y: 400, memory: 'Ember making a lonely rabbit laugh' },
+      { x: 550, y: 250, memory: 'Ember dancing alone in the moonlight' },
+    ];
+
+    sparkPositions.forEach(pos => {
+      const spark = new MemorySpark(this, pos.x, pos.y, pos.memory);
+      this.memorySparks.push(spark);
+      this.entityLayer.addChild(spark.sprite);
+
+      this.lighting.addLight(pos.x, pos.y, 0xffaa00, 0.6, 100);
+    });
+  }
+
+  createUI() {
+    const uiContainer = new Container();
+
+    const bg = new Graphics();
+    bg.roundRect(10, 10, 180, 40, 10);
+    bg.fill({ color: 0x000000, alpha: 0.4 });
+    uiContainer.addChild(bg);
+
+    this.memoryCounter = new Text({
+      text: `✨ ${this.memoriesCollected}/${this.totalMemories} Memories`,
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 20,
+        fill: 0xf1faee,
+      },
+    });
+    this.memoryCounter.x = 25;
+    this.memoryCounter.y = 18;
+    uiContainer.addChild(this.memoryCounter);
+
+    this.uiLayer.addChild(uiContainer);
+  }
+
+  update(delta) {
+    super.update(delta);
+
+    this.time = (this.time || 0) + delta * 0.02;
+    this.stars?.forEach(s => {
+      s.twinkle += delta * 0.03;
+      s.sprite.alpha = 0.2 + Math.sin(s.twinkle) * 0.3;
+    });
+
+    if (this.moon) {
+      this.moon.children[0].scale.set(1 + Math.sin(this.time * 0.5) * 0.05);
+    }
+
+    const cameraX = Math.max(0, this.player.x - this.width / 2);
+    if (this.farTrees) this.farTrees.x = -cameraX * 0.2;
+    if (this.midTrees) this.midTrees.x = -cameraX * 0.4;
+    if (this.moon) this.moon.x = 2400 - cameraX * 0.1;
+
+    this.memorySparks.forEach(spark => {
+      spark.update(delta);
+
+      if (!spark.collected && this.checkCollision(this.player, spark)) {
+        this.collectMemory(spark);
+      }
+    });
+  }
+
+  checkCollision(player, spark) {
+    const px = player.sprite.x;
+    const py = player.sprite.y;
+    const sx = spark.sprite.x;
+    const sy = spark.sprite.y;
+    const dist = Math.sqrt((px - sx) ** 2 + (py - sy) ** 2);
+    return dist < 50;
+  }
+
+  collectMemory(spark) {
+    spark.collect();
+    this.memoriesCollected++;
+    this.memoryCounter.text = `✨ ${this.memoriesCollected}/${this.totalMemories} Memories`;
+
+    this.particles.emit(spark.x, spark.y, {
+      count: 20,
+      color: 0xffd93d,
+      speed: 80,
+      lifetime: 1.5,
+      size: 4,
+    });
+
+    if (this.memoriesCollected >= this.totalMemories) {
+      this.onAllMemoriesCollected();
+    }
+  }
+
+  onAllMemoriesCollected() {
+    const overlay = new Graphics();
+    overlay.rect(0, 0, this.width, this.height);
+    overlay.fill({ color: 0x000000, alpha: 0.5 });
+    this.uiLayer.addChild(overlay);
+
+    const completeContainer = new Container();
+
+    const bg = new Graphics();
+    bg.roundRect(-200, -60, 400, 120, 20);
+    bg.fill({ color: 0x1a1a2e, alpha: 0.9 });
+    bg.stroke({ color: 0xffaa00, width: 3, alpha: 0.8 });
+    completeContainer.addChild(bg);
+
+    const title = new Text({
+      text: '✨ All memories found! ✨',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 28,
+        fill: 0xffd93d,
+        align: 'center',
+      },
+    });
+    title.anchor.set(0.5);
+    title.y = -20;
+    completeContainer.addChild(title);
+
+    const subtitle = new Text({
+      text: 'Ember remembers who she was...',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 18,
+        fill: 0xf1faee,
+        align: 'center',
+      },
+    });
+    subtitle.anchor.set(0.5);
+    subtitle.y = 20;
+    completeContainer.addChild(subtitle);
+
+    completeContainer.x = this.width / 2;
+    completeContainer.y = this.height / 2;
+    this.uiLayer.addChild(completeContainer);
+  }
+}

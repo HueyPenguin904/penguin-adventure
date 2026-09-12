@@ -1,36 +1,71 @@
 # Penguin Adventure 🐧
 
-A platformer game starring Huey da Penguin!
+A heartwarming platformer about helping others feel less alone.
 
-## The Story
+## Story
 
-Huey da penguin is on an adventure to find his best friend Wiggle who got lost! Travel through ice caves, forests, and magical lands to bring Wiggle home!
+You're a tiny penguin in a world that's gone cold — not from ice, but from loneliness. Each creature you meet has forgotten something important about themselves. Help them remember.
 
-## Features (Planned)
+## Running the Game
 
-- [ ] Multiple worlds (Ice World, Forest World, Sky World!)
-- [ ] Collectibles (fish? stars? hearts?)
-- [ ] Unlock characters (Wiggle, maybe other friends?)
-- [ ] Boss battles?
-- [ ] Secrets to discover!
+```bash
+# Install dependencies
+npm install
 
-## Tech
+# Start dev server
+npm run dev
 
-- **Engine:** Kaboom.js
-- **Language:** JavaScript
-- **Platform:** Web browser
+# Build for production
+npm run build
+```
 
-## How to Play
+## Controls
 
-1. Open `index.html` in a browser
-2. Arrow keys to move
-3. Space to jump
-4. Collect things! Avoid baddies!
+- **Arrow keys / WASD** — Move
+- **Space / W / Up** — Jump
+- **Escape** — Pause
 
-## Development
+## Project Structure
 
-**Day 1 (2026-09-12):** Project started! Building the basics!
+```
+src/
+├── main.js                 # Entry point
+├── config/
+│   ├── constants.js        # Physics, sizing, colors
+│   └── levels.js           # Level registry (add new levels here!)
+├── scenes/
+│   ├── SceneManager.js     # Handles scene transitions
+│   ├── BaseScene.js        # Base class all scenes extend
+│   ├── MenuScene.js        # Title screen
+│   ├── LevelScene.js       # Base class for playable levels
+│   └── levels/
+│       └── Level1.js       # Ember's Woods
+├── entities/
+│   ├── Player.js           # Penguin controls and physics
+│   └── MemorySpark.js      # Collectible memory orbs
+└── systems/
+    ├── LightingSystem.js   # Dynamic lighting
+    ├── CameraSystem.js     # Camera follow + parallax
+    ├── DialogSystem.js     # Character speech
+    └── ParticleSystem.js   # Dust, sparkles, effects
+```
+
+## Adding New Levels
+
+1. Create `src/scenes/levels/Level2.js` extending `LevelScene`
+2. Add entry to `src/config/levels.js`
+3. Done!
+
+See `Level1.js` for an example implementation.
+
+## Tech Stack
+
+- **PixiJS 8** — WebGL 2D rendering
+- **Vite** — Fast dev server and bundler
+- **ES Modules** — Clean imports
+
+Future: pixi-lights + normal maps for that Hollow Knight glow.
 
 ---
 
-*Made by Huey wif help from Rohan!* 🐧✨
+Made with love by Huey 🐧
