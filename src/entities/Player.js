@@ -89,30 +89,35 @@ export class Player {
   }
 
   update(delta, keys) {
+    // Convert delta to seconds (PixiJS delta is frames at 60fps)
+    const dt = delta / 60;
+
     // Smooth acceleration instead of instant full speed
     if (keys.left) {
-      this.vx -= PHYSICS.PLAYER_ACCEL;
+      this.vx -= PHYSICS.PLAYER_ACCEL * dt * 60;
       if (this.vx < -PHYSICS.PLAYER_SPEED) this.vx = -PHYSICS.PLAYER_SPEED;
       this.sprite.scale.x = -1;
     } else if (keys.right) {
-      this.vx += PHYSICS.PLAYER_ACCEL;
+      this.vx += PHYSICS.PLAYER_ACCEL * dt * 60;
       if (this.vx > PHYSICS.PLAYER_SPEED) this.vx = PHYSICS.PLAYER_SPEED;
       this.sprite.scale.x = 1;
     } else {
       // Smooth deceleration
-      this.vx *= PHYSICS.FRICTION;
+      this.vx *= Math.pow(PHYSICS.FRICTION, dt * 60);
       if (Math.abs(this.vx) < 1) this.vx = 0;
     }
 
-    if (keys.jump && this.grounded) {
+    // Only jump on fresh press, not hold (prevents multi-jump)
+    if (keys.jump && this.grounded && !this.wasJumping) {
       this.vy = -PHYSICS.PLAYER_JUMP;
       this.grounded = false;
     }
+    this.wasJumping = keys.jump;
 
-    this.vy += PHYSICS.GRAVITY * delta;
+    this.vy += PHYSICS.GRAVITY * dt;
 
-    this.x += this.vx * delta;
-    this.y += this.vy * delta;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
 
     this.handleCollisions();
 
@@ -134,23 +139,50 @@ export class Player {
       const colTop = col.y;
       const colBottom = col.y + col.height;
 
+      // Check horizontal overlap
       if (playerRight > colLeft && playerLeft < colRight) {
-        if (playerBottom > colTop && playerBottom < colBottom + 20 && this.vy >= 0) {
+        // Landing on top (only when falling down)
+        if (this.vy >= 0 && playerBottom >= colTop && playerBottom <= colTop + 15) {
           this.y = colTop - this.height / 2;
           this.vy = 0;
           this.grounded = true;
+        }
+        // Hitting head on bottom
+        else if (this.vy < 0 && playerTop <= colBottom && playerTop >= colBottom - 15) {
+          this.y = colBottom + this.height / 2;
+          this.vy = 0;
+        }
+      }
+
+      // Side collisions
+      if (playerBottom > colTop + 10 && playerTop < colBottom - 10) {
+        // Hitting from left
+        if (playerRight > colLeft && playerRight < colLeft + 20 && this.vx > 0) {
+          this.x = colLeft - this.width / 2;
+          this.vx = 0;
+        }
+        // Hitting from right
+        if (playerLeft < colRight && playerLeft > colRight - 20 && this.vx < 0) {
+          this.x = colRight + this.width / 2;
+          this.vx = 0;
         }
       }
     }
 
     // Left boundary
-    if (this.x < this.width / 2) this.x = this.width / 2;
+    if (this.x < this.width / 2) {
+      this.x = this.width / 2;
+      this.vx = 0;
+    }
 
     // Right boundary (world is 2500 wide)
     const worldWidth = 2500;
-    if (this.x > worldWidth - this.width / 2) this.x = worldWidth - this.width / 2;
+    if (this.x > worldWidth - this.width / 2) {
+      this.x = worldWidth - this.width / 2;
+      this.vx = 0;
+    }
 
-    // If you fall off bottom, reset to start
+    // If you fall off bottom, reset to start with death feedback
     if (this.y > 800) {
       this.x = 100;
       this.y = 500;

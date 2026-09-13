@@ -5,11 +5,11 @@ export const GAME = {
 };
 
 export const PHYSICS = {
-  GRAVITY: 800,
-  PLAYER_SPEED: 380,
-  PLAYER_ACCEL: 25,
-  PLAYER_JUMP: 580,
-  FRICTION: 0.85,
+  GRAVITY: 1800,
+  PLAYER_SPEED: 280,
+  PLAYER_ACCEL: 35,
+  PLAYER_JUMP: 550,
+  FRICTION: 0.88,
 };
 
 export const LIGHTING = {
