@@ -1,6 +1,7 @@
 import { Graphics, Text, Container, BlurFilter } from 'pixi.js';
 import { LevelScene } from '../LevelScene.js';
 import { MemorySpark } from '../../entities/MemorySpark.js';
+import { Ember } from '../../entities/Ember.js';
 
 /**
  * Level 1: Ember's Woods
@@ -22,6 +23,7 @@ export default class Level1 extends LevelScene {
     this.createGround();
     this.createPlatforms();
     this.createTrees();
+    this.createEmberHollow();
     this.createMemorySparks();
     this.createUI();
     this.showIntro();
@@ -423,6 +425,106 @@ export default class Level1 extends LevelScene {
     return container;
   }
 
+  createEmberHollow() {
+    // The hollow tree where Ember waits - at the far right of the level
+    const hollowX = 2200;
+    const hollowY = 620;
+
+    const hollowContainer = new Container();
+    hollowContainer.x = hollowX;
+    hollowContainer.y = hollowY;
+
+    // Large hollow tree trunk
+    const trunk = new Graphics();
+    trunk.rect(-60, -200, 120, 200);
+    trunk.fill({ color: 0x2a1d0d });
+    hollowContainer.addChild(trunk);
+
+    // Bark texture lines
+    for (let i = 0; i < 5; i++) {
+      const barkLine = new Graphics();
+      const lx = -40 + Math.random() * 80;
+      barkLine.moveTo(lx, -180);
+      barkLine.lineTo(lx + (Math.random() - 0.5) * 20, -20);
+      barkLine.stroke({ color: 0x1a1208, width: 3 });
+      hollowContainer.addChild(barkLine);
+    }
+
+    // The hollow opening (dark oval)
+    const hollowOpening = new Graphics();
+    hollowOpening.ellipse(0, -60, 45, 55);
+    hollowOpening.fill({ color: 0x0a0a0a });
+    hollowContainer.addChild(hollowOpening);
+
+    // Warm glow from inside (when Ember is there, but dim at first)
+    this.hollowGlow = new Graphics();
+    this.hollowGlow.ellipse(0, -60, 35, 45);
+    this.hollowGlow.fill({ color: 0xff6b35, alpha: 0.05 });
+    this.hollowGlow.filters = [new BlurFilter({ strength: 10 })];
+    hollowContainer.addChild(this.hollowGlow);
+
+    // Tree canopy above
+    const canopy1 = new Graphics();
+    canopy1.circle(-30, -220, 60);
+    canopy1.fill({ color: 0x1a3d00, alpha: 0.9 });
+    hollowContainer.addChild(canopy1);
+
+    const canopy2 = new Graphics();
+    canopy2.circle(30, -230, 55);
+    canopy2.fill({ color: 0x234d00, alpha: 0.9 });
+    hollowContainer.addChild(canopy2);
+
+    const canopy3 = new Graphics();
+    canopy3.circle(0, -260, 50);
+    canopy3.fill({ color: 0x2d5d10, alpha: 0.9 });
+    hollowContainer.addChild(canopy3);
+
+    // Roots at the base
+    const leftRoot = new Graphics();
+    leftRoot.moveTo(-60, 0);
+    leftRoot.quadraticCurveTo(-100, 10, -90, 20);
+    leftRoot.lineTo(-50, 10);
+    leftRoot.closePath();
+    leftRoot.fill({ color: 0x2a1d0d });
+    hollowContainer.addChild(leftRoot);
+
+    const rightRoot = new Graphics();
+    rightRoot.moveTo(60, 0);
+    rightRoot.quadraticCurveTo(100, 10, 90, 20);
+    rightRoot.lineTo(50, 10);
+    rightRoot.closePath();
+    rightRoot.fill({ color: 0x2a1d0d });
+    hollowContainer.addChild(rightRoot);
+
+    this.worldLayer.addChild(hollowContainer);
+
+    // Create Ember inside the hollow (hidden at first)
+    this.ember = new Ember(this, hollowX, hollowY - 75);
+    this.entityLayer.addChild(this.ember.sprite);
+
+    // Add a sign or subtle indicator pointing to the hollow
+    const sign = new Graphics();
+    sign.rect(1800, 580, 8, 40);
+    sign.fill({ color: 0x4a3520 });
+    const signBoard = new Graphics();
+    signBoard.roundRect(1770, 560, 70, 30, 5);
+    signBoard.fill({ color: 0x6b4423 });
+    this.worldLayer.addChild(sign);
+    this.worldLayer.addChild(signBoard);
+
+    const signText = new Text({
+      text: '→ Hollow',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 14,
+        fill: 0xf1faee,
+      },
+    });
+    signText.x = 1778;
+    signText.y = 565;
+    this.worldLayer.addChild(signText);
+  }
+
   createMemorySparks() {
     this.memorySparks = [];
 
@@ -468,33 +570,6 @@ export default class Level1 extends LevelScene {
     this.uiLayer.addChild(uiContainer);
   }
 
-  update(delta) {
-    super.update(delta);
-
-    this.time = (this.time || 0) + delta * 0.02;
-    this.stars?.forEach(s => {
-      s.twinkle += delta * 0.03;
-      s.sprite.alpha = 0.2 + Math.sin(s.twinkle) * 0.3;
-    });
-
-    if (this.moon) {
-      this.moon.children[0].scale.set(1 + Math.sin(this.time * 0.5) * 0.05);
-    }
-
-    const cameraX = Math.max(0, this.player.x - this.width / 2);
-    if (this.farTrees) this.farTrees.x = -cameraX * 0.2;
-    if (this.midTrees) this.midTrees.x = -cameraX * 0.4;
-    if (this.moon) this.moon.x = 2400 - cameraX * 0.1;
-
-    this.memorySparks.forEach(spark => {
-      spark.update(delta);
-
-      if (!spark.collected && this.checkCollision(this.player, spark)) {
-        this.collectMemory(spark);
-      }
-    });
-  }
-
   checkCollision(player, spark) {
     const px = player.sprite.x;
     const py = player.sprite.y;
@@ -523,47 +598,255 @@ export default class Level1 extends LevelScene {
   }
 
   onAllMemoriesCollected() {
-    const overlay = new Graphics();
-    overlay.rect(0, 0, this.width, this.height);
-    overlay.fill({ color: 0x000000, alpha: 0.5 });
-    this.uiLayer.addChild(overlay);
+    // Show a prompt to visit Ember
+    const promptContainer = new Container();
 
-    const completeContainer = new Container();
+    const promptBg = new Graphics();
+    promptBg.roundRect(-180, -30, 360, 60, 15);
+    promptBg.fill({ color: 0x000000, alpha: 0.7 });
+    promptBg.stroke({ color: 0xff6b35, width: 2, alpha: 0.8 });
+    promptContainer.addChild(promptBg);
 
-    const bg = new Graphics();
-    bg.roundRect(-200, -60, 400, 120, 20);
-    bg.fill({ color: 0x1a1a2e, alpha: 0.9 });
-    bg.stroke({ color: 0xffaa00, width: 3, alpha: 0.8 });
-    completeContainer.addChild(bg);
-
-    const title = new Text({
-      text: '✨ All memories found! ✨',
+    const promptText = new Text({
+      text: '✨ All memories found! Visit the hollow →',
       style: {
         fontFamily: 'Georgia, serif',
-        fontSize: 28,
+        fontSize: 20,
         fill: 0xffd93d,
         align: 'center',
       },
     });
-    title.anchor.set(0.5);
-    title.y = -20;
-    completeContainer.addChild(title);
+    promptText.anchor.set(0.5);
+    promptContainer.addChild(promptText);
 
-    const subtitle = new Text({
-      text: 'Ember remembers who she was...',
+    promptContainer.x = this.width / 2;
+    promptContainer.y = 80;
+    this.uiLayer.addChild(promptContainer);
+    this.memoryPrompt = promptContainer;
+
+    // Make the hollow glow brighter
+    this.hollowGlow.clear();
+    this.hollowGlow.ellipse(0, -60, 35, 45);
+    this.hollowGlow.fill({ color: 0xff6b35, alpha: 0.3 });
+
+    // Show Ember in the hollow
+    this.ember.show();
+    this.ember.restoreMemory();
+    this.ember.restoreMemory();
+    this.ember.restoreMemory();
+
+    // Set flag to trigger dialogue when player approaches
+    this.emberAwakened = true;
+  }
+
+  checkEmberMeeting() {
+    if (!this.emberAwakened || this.emberMet) return;
+
+    // Check if player is close to Ember
+    const dist = Math.abs(this.player.x - this.ember.x);
+    if (dist < 100) {
+      this.emberMet = true;
+      this.startEmberDialogue();
+    }
+  }
+
+  startEmberDialogue() {
+    // Pause controls
+    this.introActive = true;
+
+    // Hide the prompt
+    if (this.memoryPrompt) {
+      this.memoryPrompt.visible = false;
+    }
+
+    // Dialogue sequence
+    const dialogueLines = [
+      { speaker: 'ember', text: "Oh... you brought them back." },
+      { speaker: 'ember', text: "I remember now... I used to help others." },
+      { speaker: 'ember', text: "Teaching baby birds to fly..." },
+      { speaker: 'ember', text: "Making lonely rabbits laugh..." },
+      { speaker: 'ember', text: "Dancing alone in the moonlight, just because it felt good." },
+      { speaker: 'ember', text: "I burned so bright for everyone else..." },
+      { speaker: 'ember', text: "...that I forgot to save any warmth for myself." },
+      { speaker: 'narrator', text: "But now, a little penguin has reminded her." },
+      { speaker: 'ember', text: "Thank you, little one. Will you walk me home?" },
+    ];
+
+    this.showDialogueSequence(dialogueLines, () => {
+      this.startWalkHomeSequence();
+    });
+  }
+
+  showDialogueSequence(lines, onComplete) {
+    const dialogueContainer = new Container();
+
+    // Dark overlay
+    const overlay = new Graphics();
+    overlay.rect(0, 0, this.width, this.height);
+    overlay.fill({ color: 0x000000, alpha: 0.6 });
+    dialogueContainer.addChild(overlay);
+
+    // Dialogue box
+    const boxY = this.height - 150;
+    const box = new Graphics();
+    box.roundRect(50, boxY, this.width - 100, 120, 15);
+    box.fill({ color: 0x1a1a2e, alpha: 0.95 });
+    box.stroke({ color: 0xff6b35, width: 2 });
+    dialogueContainer.addChild(box);
+
+    // Speaker name
+    const speakerText = new Text({
+      text: '',
       style: {
         fontFamily: 'Georgia, serif',
         fontSize: 18,
+        fill: 0xff6b35,
+        fontWeight: 'bold',
+      },
+    });
+    speakerText.x = 80;
+    speakerText.y = boxY + 15;
+    dialogueContainer.addChild(speakerText);
+
+    // Dialogue text
+    const dialogueText = new Text({
+      text: '',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 22,
+        fill: 0xf1faee,
+        wordWrap: true,
+        wordWrapWidth: this.width - 180,
+      },
+    });
+    dialogueText.x = 80;
+    dialogueText.y = boxY + 45;
+    dialogueContainer.addChild(dialogueText);
+
+    // Continue prompt
+    const continueText = new Text({
+      text: '[ tap to continue ]',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 14,
+        fill: 0x888888,
+      },
+    });
+    continueText.x = this.width - 200;
+    continueText.y = boxY + 90;
+    dialogueContainer.addChild(continueText);
+
+    this.uiLayer.addChild(dialogueContainer);
+
+    let lineIndex = 0;
+
+    const showLine = () => {
+      if (lineIndex >= lines.length) {
+        dialogueContainer.destroy();
+        this.introActive = false;
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const line = lines[lineIndex];
+      speakerText.text = line.speaker === 'ember' ? 'Ember' : '';
+      dialogueText.text = line.text;
+      lineIndex++;
+    };
+
+    showLine();
+
+    // Click to advance
+    overlay.eventMode = 'static';
+    overlay.on('pointerdown', showLine);
+  }
+
+  startWalkHomeSequence() {
+    // Final victory screen
+    const endContainer = new Container();
+
+    const overlay = new Graphics();
+    overlay.rect(0, 0, this.width, this.height);
+    overlay.fill({ color: 0x000000, alpha: 0.8 });
+    endContainer.addChild(overlay);
+
+    const title = new Text({
+      text: '🔥 Level Complete 🔥',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 42,
+        fill: 0xff6b35,
+        align: 'center',
+      },
+    });
+    title.anchor.set(0.5);
+    title.x = this.width / 2;
+    title.y = this.height / 2 - 60;
+    endContainer.addChild(title);
+
+    const subtitle = new Text({
+      text: 'Ember remembers who she was.\nShe shines again.',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 24,
         fill: 0xf1faee,
         align: 'center',
       },
     });
     subtitle.anchor.set(0.5);
-    subtitle.y = 20;
-    completeContainer.addChild(subtitle);
+    subtitle.x = this.width / 2;
+    subtitle.y = this.height / 2 + 20;
+    endContainer.addChild(subtitle);
 
-    completeContainer.x = this.width / 2;
-    completeContainer.y = this.height / 2;
-    this.uiLayer.addChild(completeContainer);
+    const thanks = new Text({
+      text: 'Thank you for playing 🐧',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 18,
+        fill: 0x888888,
+        align: 'center',
+      },
+    });
+    thanks.anchor.set(0.5);
+    thanks.x = this.width / 2;
+    thanks.y = this.height / 2 + 100;
+    endContainer.addChild(thanks);
+
+    this.uiLayer.addChild(endContainer);
+  }
+
+  update(delta) {
+    super.update(delta);
+
+    this.time = (this.time || 0) + delta * 0.02;
+    this.stars?.forEach(s => {
+      s.twinkle += delta * 0.03;
+      s.sprite.alpha = 0.2 + Math.sin(s.twinkle) * 0.3;
+    });
+
+    if (this.moon) {
+      this.moon.children[0].scale.set(1 + Math.sin(this.time * 0.5) * 0.05);
+    }
+
+    const cameraX = Math.max(0, this.player.x - this.width / 2);
+    if (this.farTrees) this.farTrees.x = -cameraX * 0.2;
+    if (this.midTrees) this.midTrees.x = -cameraX * 0.4;
+    if (this.moon) this.moon.x = 2400 - cameraX * 0.1;
+
+    this.memorySparks.forEach(spark => {
+      spark.update(delta);
+
+      if (!spark.collected && this.checkCollision(this.player, spark)) {
+        this.collectMemory(spark);
+      }
+    });
+
+    // Update Ember if she exists
+    if (this.ember) {
+      this.ember.update(delta);
+    }
+
+    // Check if player meets Ember
+    this.checkEmberMeeting();
   }
 }
