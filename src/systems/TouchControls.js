@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Text, Circle } from 'pixi.js';
 import { GAME } from '../config/constants.js';
 
 /**
@@ -90,9 +90,10 @@ export class TouchControls {
     text.y = size / 2;
     button.addChild(text);
 
-    // Make it interactive
+    // Make it interactive with explicit hit area
     button.eventMode = 'static';
     button.cursor = 'pointer';
+    button.hitArea = new Circle(size / 2, size / 2, size / 2);
 
     // Direct touch handling - no delays!
     const pressButton = () => {
