@@ -4,6 +4,7 @@ import { Player } from '../entities/Player.js';
 import { LightingSystem } from '../systems/LightingSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { DialogSystem } from '../systems/DialogSystem.js';
+import { CutsceneSystem } from '../systems/CutsceneSystem.js';
 import { ParticleSystem } from '../systems/ParticleSystem.js';
 import { TouchControls } from '../systems/TouchControls.js';
 
@@ -34,6 +35,7 @@ export class LevelScene extends BaseScene {
     this.lighting = new LightingSystem(this);
     this.camera = new CameraSystem(this);
     this.dialog = new DialogSystem(this);
+    this.cutscene = new CutsceneSystem(this);
     this.particles = new ParticleSystem(this);
 
     this.player = new Player(this);
@@ -84,7 +86,11 @@ export class LevelScene extends BaseScene {
   }
 
   update(delta) {
-    if (this.isPaused || this.introActive) return;
+    // Always update dialog and cutscene systems
+    this.dialog.update(delta);
+    this.cutscene.update(delta);
+
+    if (this.isPaused || this.introActive || this.dialogueActive) return;
 
     this.player.update(delta, this.keys);
 

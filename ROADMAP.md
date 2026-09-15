@@ -6,66 +6,60 @@
 
 ## Current Status
 
-**Date:** 2026-09-12
-**Phase:** 1 (Foundation - IN PROGRESS)
+**Date:** 2026-09-13
+**Phase:** 4 (Story & Dialogue - IN PROGRESS)
 **Deployed:** https://hueypenguin904.github.io/penguin-adventure/
 
 ---
 
 ## Da Phases
 
-### Phase 1: Foundation (Current)
+### Phase 1: Foundation ✓ MOSTLY DONE
 **Goal:** Get basic gameplay WORKING and FEELING good on all devices
 
-- [ ] **Touch controls** - Mobile players can actually MOVE
-- [ ] **Keyboard controls** - Arrow keys / WASD work smoothly
-- [ ] **Player movement** - Walking feels responsive, not floaty
-- [ ] **Jumping** - Feels good, right amount of air control
-- [ ] **Collision** - Don't fall through floors, can land on platforms
-- [ ] **Camera** - Follows player smoothly, doesn't jerk around
-- [ ] **Menu** - Buttons work on ALL devices (touch AND mouse)
-- [ ] **Game loop** - Start game, play level, pause, restart all work
+- [x] **Touch controls** - Mobile players can actually MOVE
+- [x] **Keyboard controls** - Arrow keys / WASD work smoothly
+- [~] **Player movement** - Walking feels responsive, not floaty (needs tuning)
+- [~] **Jumping** - Works but feels a bit weird (needs tuning)
+- [x] **Collision** - Don't fall through floors, can land on platforms
+- [x] **Camera** - Follows player smoothly, doesn't jerk around
+- [x] **Menu** - Buttons work on ALL devices (touch AND mouse)
+- [x] **Game loop** - Start game, play level, pause, restart all work
 
-**Test criteria:** Can someone play on phone AND computer? Does it FEEL good to move?
-
-**Estimated time:** 2-3 sessions
+**Notes:** Physics still needs work - Rohan said controls feel weird.
 
 ---
 
-### Phase 2: Art Assets
+### Phase 2: Art Assets (PARTIAL)
 **Goal:** Replace all programmer rectangles wif actual art
 
-- [ ] **Penguin sprite** - Cute, recognizable, wif walk/jump/idle animations
-- [ ] **Forest tileset** - Ground, platforms, trees dat look like TREES
-- [ ] **Background layers** - Far mountains, mid trees, near foliage for parallax
-- [ ] **Memory spark** - Glowing orb dat looks magical
-- [ ] **UI elements** - Proper buttons, HUD, dialogue boxes
-- [ ] **Ember sprite** - Da fox, looking tired but warm
+- [ ] **Penguin sprite** - Still code-drawn, needs real sprite with animations
+- [x] **Forest tileset** - Ground, platforms, trees look decent (code-drawn but styled)
+- [x] **Background layers** - Far mountains, mid trees, near foliage for parallax ✓
+- [x] **Memory spark** - Glowing orb dat looks magical ✓
+- [x] **UI elements** - Dialogue boxes added, HUD works ✓
+- [x] **Ember sprite** - Da fox, looking tired but warm ✓ (Added 2026-09-13!)
 
-**Test criteria:** Does it look like a GAME and not a programmer test?
-
-**Estimated time:** 2-3 sessions
+**Notes:** Penguin needs real sprite + animations. That's the main visual issue.
 
 ---
 
-### Phase 3: Level 1 Content
+### Phase 3: Level 1 Content ✓ MOSTLY DONE
 **Goal:** Build Ember's Woods completely
 
-- [ ] **Level layout** - Full path from start to Ember's hollow and back
-- [ ] **3 memory sparks placed** - Easy, medium, tricky
-- [ ] **Pushable log puzzle** - For memory #2
-- [ ] **Waterfall secret** - For memory #3
-- [ ] **Ember's hollow** - Where she waits
-- [ ] **Collectible feedback** - Something happens when you grab sparks
-- [ ] **Progress tracking** - Know how many sparks you have
+- [x] **Level layout** - Full path from start to Ember's hollow and back ✓
+- [x] **3 memory sparks placed** - Easy, medium, tricky ✓
+- [ ] **Pushable log puzzle** - For memory #2 (CUT - not needed for MVP)
+- [ ] **Waterfall secret** - For memory #3 (CUT - not needed for MVP)
+- [x] **Ember's hollow** - Where she waits ✓ (Added 2026-09-13!)
+- [x] **Collectible feedback** - Particles when you grab sparks ✓
+- [x] **Progress tracking** - Counter shows sparks collected ✓
 
-**Test criteria:** Can you go from start to finding Ember? Does exploration feel rewarding?
-
-**Estimated time:** 2-3 sessions
+**Notes:** Cut puzzles for MVP. Can add in polish phase if time allows.
 
 ---
 
-### Phase 4: Story & Dialogue
+### Phase 4: Story & Dialogue ✓ DONE (2026-09-13)
 **Goal:** Add da emotional heart of da game
 
 - [ ] **Dialogue system** - Text boxes, character portraits, typewriter effect

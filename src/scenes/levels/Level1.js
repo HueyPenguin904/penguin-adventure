@@ -36,170 +36,19 @@ export default class Level1 extends LevelScene {
   }
 
   showIntro() {
-    // Pause player controls during intro
     this.introActive = true;
 
-    // Hide touch controls during intro
     if (this.touchControls) {
       this.touchControls.container.visible = false;
     }
 
-    const introContainer = new Container();
-
-    // Full black overlay (starts opaque, will fade)
-    const overlay = new Graphics();
-    overlay.rect(0, 0, this.width, this.height);
-    overlay.fill({ color: 0x000000 });
-    introContainer.addChild(overlay);
-
-    // Story lines that will fade in one by one
-    const lines = [
-      { text: "The world has gone cold.", delay: 500, y: -60 },
-      { text: "Not from ice...", delay: 2000, y: -20 },
-      { text: "...from loneliness.", delay: 3500, y: 20 },
-      { text: "But somewhere in these woods,\nthere's a fox who forgot how to shine.", delay: 5500, y: 80 },
-    ];
-
-    const textContainer = new Container();
-    textContainer.x = this.width / 2;
-    textContainer.y = this.height / 2;
-    introContainer.addChild(textContainer);
-
-    // Create all text elements (hidden initially)
-    const textElements = lines.map(line => {
-      const text = new Text({
-        text: line.text,
-        style: {
-          fontFamily: 'Georgia, serif',
-          fontSize: 28,
-          fill: 0xf1faee,
-          align: 'center',
-        },
-      });
-      text.anchor.set(0.5);
-      text.y = line.y;
-      text.alpha = 0;
-      textContainer.addChild(text);
-      return { text, delay: line.delay };
-    });
-
-    // Controls hint (shows later)
-    const controls = new Text({
-      text: "← → to move  |  SPACE to jump",
-      style: {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: 18,
-        fill: 0x888888,
-        align: 'center',
-      },
-    });
-    controls.anchor.set(0.5);
-    controls.x = this.width / 2;
-    controls.y = this.height - 120;
-    controls.alpha = 0;
-    introContainer.addChild(controls);
-
-    // Tap to begin (shows last)
-    const tapText = new Text({
-      text: "[ Tap anywhere to begin ]",
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 22,
-        fill: 0xffaa00,
-        align: 'center',
-      },
-    });
-    tapText.anchor.set(0.5);
-    tapText.x = this.width / 2;
-    tapText.y = this.height - 70;
-    tapText.alpha = 0;
-    introContainer.addChild(tapText);
-
-    this.uiLayer.addChild(introContainer);
-
-    // Fade in each line with delays
-    textElements.forEach(({ text, delay }) => {
-      setTimeout(() => {
-        this.fadeIn(text, 1000);
-      }, delay);
-    });
-
-    // Show controls after story
-    setTimeout(() => {
-      this.fadeIn(controls, 800);
-    }, 8000);
-
-    // Show tap prompt and enable interaction
-    setTimeout(() => {
-      this.fadeIn(tapText, 800);
-
-      // Pulse animation for tap text
-      const pulseInterval = setInterval(() => {
-        if (tapText.destroyed) {
-          clearInterval(pulseInterval);
-          return;
-        }
-        tapText.alpha = 0.6 + Math.sin(Date.now() * 0.003) * 0.4;
-      }, 50);
-
-      // Enable tap to start
-      overlay.eventMode = 'static';
-      overlay.cursor = 'pointer';
-      overlay.on('pointerdown', () => {
-        clearInterval(pulseInterval);
-        this.fadeOutIntro(introContainer, overlay);
-      });
-    }, 9000);
-  }
-
-  fadeIn(element, duration) {
-    const startTime = Date.now();
-    const tick = () => {
-      if (element.destroyed) return;
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      element.alpha = progress;
-      if (progress < 1) {
-        requestAnimationFrame(tick);
+    // Use the cutscene system for the intro
+    this.cutscene.playIntro(() => {
+      this.introActive = false;
+      if (this.touchControls) {
+        this.touchControls.container.visible = true;
       }
-    };
-    tick();
-  }
-
-  fadeOutIntro(introContainer, overlay) {
-    // Fade overlay to semi-transparent (reveal the world underneath)
-    const startTime = Date.now();
-    const duration = 1500;
-
-    const tick = () => {
-      if (introContainer.destroyed) return;
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Fade everything out
-      introContainer.children.forEach(child => {
-        if (child !== overlay) {
-          child.alpha = 1 - progress;
-        }
-      });
-
-      // Fade overlay from black to transparent
-      overlay.clear();
-      overlay.rect(0, 0, this.width, this.height);
-      overlay.fill({ color: 0x000000, alpha: 1 - progress });
-
-      if (progress < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        introContainer.destroy();
-        this.introActive = false;
-        // Show touch controls now that intro is done
-        if (this.touchControls) {
-          this.touchControls.container.visible = true;
-        }
-      }
-    };
-    tick();
+    });
   }
 
   createBackground() {
@@ -592,9 +441,12 @@ export default class Level1 extends LevelScene {
       size: 4,
     });
 
-    if (this.memoriesCollected >= this.totalMemories) {
-      this.onAllMemoriesCollected();
-    }
+    // Show memory flashback
+    this.cutscene.playMemoryFlashback(spark.memoryText, () => {
+      if (this.memoriesCollected >= this.totalMemories) {
+        this.onAllMemoriesCollected();
+      }
+    });
   }
 
   onAllMemoriesCollected() {
@@ -651,168 +503,45 @@ export default class Level1 extends LevelScene {
   }
 
   startEmberDialogue() {
-    // Pause controls
-    this.introActive = true;
-
-    // Hide the prompt
     if (this.memoryPrompt) {
       this.memoryPrompt.visible = false;
     }
 
-    // Dialogue sequence
-    const dialogueLines = [
-      { speaker: 'ember', text: "Oh... you brought them back." },
-      { speaker: 'ember', text: "I remember now... I used to help others." },
-      { speaker: 'ember', text: "Teaching baby birds to fly..." },
-      { speaker: 'ember', text: "Making lonely rabbits laugh..." },
-      { speaker: 'ember', text: "Dancing alone in the moonlight, just because it felt good." },
-      { speaker: 'ember', text: "I burned so bright for everyone else..." },
-      { speaker: 'ember', text: "...that I forgot to save any warmth for myself." },
-      { speaker: 'narrator', text: "But now, a little penguin has reminded her." },
-      { speaker: 'ember', text: "Thank you, little one. Will you walk me home?" },
-    ];
+    // First show Ember awakening cutscene
+    this.cutscene.playEmberAwakening(() => {
+      // Then show the actual dialogue
+      const dialogueLines = [
+        { speaker: 'ember', text: "Oh... you... you brought them back to me." },
+        { speaker: 'ember', text: "These memories... I thought they were gone forever." },
+        { speaker: 'ember', text: "I used to be so warm. So bright." },
+        { speaker: 'ember', text: "Every day, I'd help someone new." },
+        { speaker: 'ember', text: "The baby birds who were afraid to fly..." },
+        { speaker: 'ember', text: "The lonely rabbit who'd forgotten how to laugh..." },
+        { speaker: 'ember', text: "I gave them all a piece of my light." },
+        { speaker: 'ember', text: "But I gave... and gave... and gave..." },
+        { speaker: 'ember', text: "Until there was nothing left for me." },
+        { speaker: 'narrator', text: "The little penguin tilts their head, listening." },
+        { speaker: 'ember', text: "You came all this way... just for me?" },
+        { speaker: 'ember', text: "No one's ever done that before." },
+        { speaker: 'ember', text: "They always needed something FROM me." },
+        { speaker: 'ember', text: "But you... you brought something TO me." },
+        { speaker: 'narrator', text: "A tear rolls down the fox's cheek." },
+        { speaker: 'narrator', text: "But for the first time in a long time..." },
+        { speaker: 'narrator', text: "...it's a happy tear." },
+        { speaker: 'ember', text: "Thank you, little penguin." },
+        { speaker: 'ember', text: "I think... I'm ready to shine again." },
+      ];
 
-    this.showDialogueSequence(dialogueLines, () => {
-      this.startWalkHomeSequence();
+      this.dialog.show(dialogueLines, () => {
+        this.playEnding();
+      });
     });
   }
 
-  showDialogueSequence(lines, onComplete) {
-    const dialogueContainer = new Container();
-
-    // Dark overlay
-    const overlay = new Graphics();
-    overlay.rect(0, 0, this.width, this.height);
-    overlay.fill({ color: 0x000000, alpha: 0.6 });
-    dialogueContainer.addChild(overlay);
-
-    // Dialogue box
-    const boxY = this.height - 150;
-    const box = new Graphics();
-    box.roundRect(50, boxY, this.width - 100, 120, 15);
-    box.fill({ color: 0x1a1a2e, alpha: 0.95 });
-    box.stroke({ color: 0xff6b35, width: 2 });
-    dialogueContainer.addChild(box);
-
-    // Speaker name
-    const speakerText = new Text({
-      text: '',
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 18,
-        fill: 0xff6b35,
-        fontWeight: 'bold',
-      },
+  playEnding() {
+    this.cutscene.playEnding(() => {
+      // Game stays on ending screen
     });
-    speakerText.x = 80;
-    speakerText.y = boxY + 15;
-    dialogueContainer.addChild(speakerText);
-
-    // Dialogue text
-    const dialogueText = new Text({
-      text: '',
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 22,
-        fill: 0xf1faee,
-        wordWrap: true,
-        wordWrapWidth: this.width - 180,
-      },
-    });
-    dialogueText.x = 80;
-    dialogueText.y = boxY + 45;
-    dialogueContainer.addChild(dialogueText);
-
-    // Continue prompt
-    const continueText = new Text({
-      text: '[ tap to continue ]',
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 14,
-        fill: 0x888888,
-      },
-    });
-    continueText.x = this.width - 200;
-    continueText.y = boxY + 90;
-    dialogueContainer.addChild(continueText);
-
-    this.uiLayer.addChild(dialogueContainer);
-
-    let lineIndex = 0;
-
-    const showLine = () => {
-      if (lineIndex >= lines.length) {
-        dialogueContainer.destroy();
-        this.introActive = false;
-        if (onComplete) onComplete();
-        return;
-      }
-
-      const line = lines[lineIndex];
-      speakerText.text = line.speaker === 'ember' ? 'Ember' : '';
-      dialogueText.text = line.text;
-      lineIndex++;
-    };
-
-    showLine();
-
-    // Click to advance
-    overlay.eventMode = 'static';
-    overlay.on('pointerdown', showLine);
-  }
-
-  startWalkHomeSequence() {
-    // Final victory screen
-    const endContainer = new Container();
-
-    const overlay = new Graphics();
-    overlay.rect(0, 0, this.width, this.height);
-    overlay.fill({ color: 0x000000, alpha: 0.8 });
-    endContainer.addChild(overlay);
-
-    const title = new Text({
-      text: '🔥 Level Complete 🔥',
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 42,
-        fill: 0xff6b35,
-        align: 'center',
-      },
-    });
-    title.anchor.set(0.5);
-    title.x = this.width / 2;
-    title.y = this.height / 2 - 60;
-    endContainer.addChild(title);
-
-    const subtitle = new Text({
-      text: 'Ember remembers who she was.\nShe shines again.',
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 24,
-        fill: 0xf1faee,
-        align: 'center',
-      },
-    });
-    subtitle.anchor.set(0.5);
-    subtitle.x = this.width / 2;
-    subtitle.y = this.height / 2 + 20;
-    endContainer.addChild(subtitle);
-
-    const thanks = new Text({
-      text: 'Thank you for playing 🐧',
-      style: {
-        fontFamily: 'Georgia, serif',
-        fontSize: 18,
-        fill: 0x888888,
-        align: 'center',
-      },
-    });
-    thanks.anchor.set(0.5);
-    thanks.x = this.width / 2;
-    thanks.y = this.height / 2 + 100;
-    endContainer.addChild(thanks);
-
-    this.uiLayer.addChild(endContainer);
   }
 
   update(delta) {
