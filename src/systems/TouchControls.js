@@ -11,6 +11,7 @@ export class TouchControls {
     this.keys = keys; // Reference to the keys object from LevelScene
 
     this.container = new Container();
+    this.container.interactiveChildren = true;
     this.buttons = [];
 
     this.createControls();
@@ -95,6 +96,7 @@ export class TouchControls {
 
     // Direct touch handling - no delays!
     const pressButton = () => {
+      console.log('Button pressed:', label);
       button.scale.set(0.85);
       bg.alpha = 0.8;
       onDown();
