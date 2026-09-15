@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, BlurFilter } from 'pixi.js';
+import { Container, Graphics, Text, BlurFilter, Rectangle } from 'pixi.js';
 
 /**
  * CutsceneSystem - Handles cinematic story moments
@@ -62,9 +62,10 @@ export class CutsceneSystem {
     this.tapText.visible = false;
     this.container.addChild(this.tapText);
 
-    // Make clickable
+    // Make clickable - explicit hitArea for PixiJS v8
     this.background.eventMode = 'static';
     this.background.cursor = 'pointer';
+    this.background.hitArea = new Rectangle(0, 0, width, height);
     this.background.on('pointerdown', () => this.onTap());
   }
 

@@ -11,8 +11,19 @@ export class TouchControls {
     this.keys = keys; // Reference to the keys object from LevelScene
 
     this.container = new Container();
+    this.container.eventMode = 'static';
     this.container.interactiveChildren = true;
     this.buttons = [];
+
+    // Debug text to show touch status
+    this.debugText = new Text({
+      text: 'Touch: waiting...',
+      style: { fontSize: 14, fill: 0x00ff00 }
+    });
+    this.debugText.x = 10;
+    this.debugText.y = 60;
+    this.container.addChild(this.debugText);
+    this.touchCount = 0;
 
     this.createControls();
 
@@ -21,6 +32,13 @@ export class TouchControls {
 
     // Always show on mobile, hide on desktop by default
     this.container.visible = this.isMobile;
+
+    // Global touch debug - listen on the whole scene
+    if (scene.app && scene.app.canvas) {
+      scene.app.canvas.addEventListener('touchstart', (e) => {
+        this.debugText.text = `Canvas touch: ${e.touches.length} @ (${Math.round(e.touches[0].clientX)}, ${Math.round(e.touches[0].clientY)})`;
+      });
+    }
   }
 
   createControls() {
@@ -98,6 +116,8 @@ export class TouchControls {
     // Direct touch handling - no delays!
     const pressButton = () => {
       console.log('Button pressed:', label);
+      this.touchCount++;
+      this.debugText.text = `Touch: ${label} (${this.touchCount})`;
       button.scale.set(0.85);
       bg.alpha = 0.8;
       onDown();

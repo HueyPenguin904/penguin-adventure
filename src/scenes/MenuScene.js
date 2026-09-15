@@ -1,4 +1,4 @@
-import { Container, Text, Graphics, BlurFilter } from 'pixi.js';
+import { Container, Text, Graphics, BlurFilter, Rectangle } from 'pixi.js';
 import { BaseScene } from './BaseScene.js';
 import { LEVELS } from '../config/levels.js';
 
@@ -180,6 +180,7 @@ export class MenuScene extends BaseScene {
     button.y = this.height * 0.55;
     button.eventMode = 'static';
     button.cursor = 'pointer';
+    button.hitArea = new Rectangle(-120, -30, 240, 60);
 
     const glow = new Graphics();
     glow.roundRect(-135, -40, 270, 80, 40);
