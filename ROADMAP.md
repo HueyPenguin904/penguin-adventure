@@ -59,14 +59,14 @@
 
 ---
 
-### Phase 4: Story & Dialogue ✓ DONE (2026-09-13)
+### Phase 4: Story & Dialogue ✓ DONE (2026-09-15)
 **Goal:** Add da emotional heart of da game
 
-- [ ] **Dialogue system** - Text boxes, character portraits, typewriter effect
-- [ ] **Ember's story** - Her lines when you meet her
-- [ ] **Memory flashbacks** - Show her past when you give her sparks
-- [ ] **Walk home sequence** - She follows you, lanterns light up
-- [ ] **Level complete** - Warm ending moment
+- [x] **Dialogue system** - Text boxes, character portraits, typewriter effect ✓
+- [x] **Ember's story** - Her lines when you meet her ✓
+- [x] **Memory flashbacks** - Show her past when you give her sparks ✓
+- [x] **Walk home sequence** - She follows you, lanterns light up ✓ (Added 2026-09-15!)
+- [x] **Level complete** - Warm ending moment ✓
 
 **Test criteria:** Do you FEEL somefing when you help Ember?
 

@@ -23,6 +23,7 @@ export default class Level1 extends LevelScene {
     this.createGround();
     this.createPlatforms();
     this.createTrees();
+    this.createLanterns();
     this.createEmberHollow();
     this.createMemorySparks();
     this.createUI();
@@ -272,6 +273,77 @@ export default class Level1 extends LevelScene {
     });
 
     return container;
+  }
+
+  createLanterns() {
+    // Lanterns along the path - they light up as Ember walks home
+    this.lanterns = [];
+    const lanternPositions = [
+      { x: 300, y: 580 },
+      { x: 550, y: 580 },
+      { x: 800, y: 580 },
+      { x: 1050, y: 580 },
+      { x: 1300, y: 580 },
+      { x: 1550, y: 580 },
+      { x: 1800, y: 580 },
+    ];
+
+    lanternPositions.forEach(pos => {
+      const lanternContainer = new Container();
+      lanternContainer.x = pos.x;
+      lanternContainer.y = pos.y;
+
+      // Post
+      const post = new Graphics();
+      post.rect(-4, 0, 8, 40);
+      post.fill({ color: 0x3d2914 });
+      lanternContainer.addChild(post);
+
+      // Lantern cage
+      const cage = new Graphics();
+      cage.roundRect(-12, -25, 24, 30, 4);
+      cage.fill({ color: 0x2a1d0d });
+      cage.stroke({ color: 0x4a3520, width: 2 });
+      lanternContainer.addChild(cage);
+
+      // Glass panels (dark when unlit)
+      const glass = new Graphics();
+      glass.roundRect(-8, -20, 16, 20, 2);
+      glass.fill({ color: 0x1a1a1a, alpha: 0.8 });
+      lanternContainer.addChild(glass);
+
+      // Flame container (hidden until lit)
+      const flameContainer = new Container();
+      flameContainer.visible = false;
+
+      const flame = new Graphics();
+      flame.ellipse(0, -10, 6, 8);
+      flame.fill({ color: 0xff6b35 });
+      flameContainer.addChild(flame);
+
+      const flameCore = new Graphics();
+      flameCore.ellipse(0, -10, 3, 5);
+      flameCore.fill({ color: 0xffd93d });
+      flameContainer.addChild(flameCore);
+
+      // Glow when lit
+      const glow = new Graphics();
+      glow.circle(0, -10, 40);
+      glow.fill({ color: 0xff6b35, alpha: 0.2 });
+      glow.filters = [new BlurFilter({ strength: 15 })];
+      flameContainer.addChild(glow);
+
+      lanternContainer.addChild(flameContainer);
+
+      this.worldLayer.addChild(lanternContainer);
+
+      this.lanterns.push({
+        x: pos.x,
+        container: lanternContainer,
+        flameContainer: flameContainer,
+        lit: false,
+      });
+    });
   }
 
   createEmberHollow() {
@@ -533,9 +605,83 @@ export default class Level1 extends LevelScene {
       ];
 
       this.dialog.show(dialogueLines, () => {
-        this.playEnding();
+        this.startWalkHome();
       });
     });
+  }
+
+  startWalkHome() {
+    // Show prompt to walk home
+    const walkPrompt = new Container();
+
+    const promptBg = new Graphics();
+    promptBg.roundRect(-200, -30, 400, 60, 15);
+    promptBg.fill({ color: 0x000000, alpha: 0.7 });
+    promptBg.stroke({ color: 0xff6b35, width: 2, alpha: 0.8 });
+    walkPrompt.addChild(promptBg);
+
+    const promptText = new Text({
+      text: '🦊 Walk Ember home ← Lead her to safety',
+      style: {
+        fontFamily: 'Georgia, serif',
+        fontSize: 18,
+        fill: 0xffd93d,
+        align: 'center',
+      },
+    });
+    promptText.anchor.set(0.5);
+    walkPrompt.addChild(promptText);
+
+    walkPrompt.x = this.width / 2;
+    walkPrompt.y = 80;
+    this.uiLayer.addChild(walkPrompt);
+    this.walkPrompt = walkPrompt;
+
+    // Ember starts following the player
+    this.ember.startFollowing(this.player);
+    this.walkingHome = true;
+  }
+
+  checkLanterns() {
+    if (!this.walkingHome || !this.lanterns) return;
+
+    // Light up lanterns as Ember passes them
+    this.lanterns.forEach(lantern => {
+      if (!lantern.lit && this.ember.x < lantern.x + 50) {
+        lantern.lit = true;
+        lantern.flameContainer.visible = true;
+
+        // Add warm glow to the lighting system
+        this.lighting.addLight(lantern.x, 570, 0xff6b35, 0.4, 80);
+
+        // Particle burst
+        this.particles.emit(lantern.x, 570, {
+          count: 10,
+          color: 0xffd93d,
+          speed: 30,
+          lifetime: 1,
+          size: 3,
+        });
+      }
+    });
+  }
+
+  checkWalkHomeComplete() {
+    if (!this.walkingHome) return;
+
+    // When they reach the start area
+    if (this.ember.x < 200 && this.player.x < 250) {
+      this.walkingHome = false;
+      this.ember.stopFollowing();
+
+      // Remove the walk prompt
+      if (this.walkPrompt) {
+        this.walkPrompt.visible = false;
+      }
+
+      // Play the ending
+      this.playEnding();
+    }
   }
 
   playEnding() {
@@ -577,5 +723,11 @@ export default class Level1 extends LevelScene {
 
     // Check if player meets Ember
     this.checkEmberMeeting();
+
+    // Check lanterns during walk home
+    this.checkLanterns();
+
+    // Check if walk home is complete
+    this.checkWalkHomeComplete();
   }
 }

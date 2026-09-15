@@ -188,10 +188,43 @@ export class Ember {
     }
   }
 
+  startFollowing(target) {
+    this.following = true;
+    this.target = target;
+    this.followSpeed = 3;
+  }
+
+  stopFollowing() {
+    this.following = false;
+    this.target = null;
+  }
+
   update(delta) {
     if (!this.visible) return;
 
     this.time += delta * 0.02;
+
+    // Following behavior - walk toward player
+    if (this.following && this.target) {
+      const dx = this.target.x - this.x;
+      const distance = Math.abs(dx);
+
+      if (distance > 80) {
+        // Move toward player
+        const direction = dx > 0 ? 1 : -1;
+        this.x += direction * this.followSpeed * delta;
+        this.sprite.x = this.x;
+
+        // Face the right direction
+        this.sprite.scale.x = direction;
+
+        // Walking animation
+        this.sprite.y = this.y + Math.sin(this.time * 10) * 3;
+      } else {
+        // Close enough, just idle
+        this.sprite.y = this.y;
+      }
+    }
 
     // Gentle breathing animation
     this.sprite.scale.y = 1 + Math.sin(this.time * 2) * 0.02;
